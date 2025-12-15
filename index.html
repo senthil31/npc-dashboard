@@ -73,7 +73,6 @@
     <input id="futureInflow" type="number" value="404">
   </div>
 
-  <!-- BACKLOG TYPE -->
   <div class="card">
     <h3>Backlog Type</h3>
     <label>NPC (Firm)</label>
@@ -183,11 +182,15 @@
     plugins:[ChartDataLabels]
   });
 
+  /* 🔧 FIX: cache elements (no name collision) */
+  const devAvailEl = document.getElementById("devAvail");
+  const qaAvailEl  = document.getElementById("qaAvail");
+
   function recalc() {
     currentBacklogKpi.textContent = currentBacklog.value;
     capacityKpi.textContent = capacity.value;
 
-    /* Backlog type calc */
+    /* Backlog type */
     const weighted = Math.round(custDep.value * 0.6);
     weightedUnfirm.textContent = weighted;
     totalStartBacklog.textContent =
@@ -213,18 +216,19 @@
 
     /* Dev / QA */
     const DEV_HRS=8.9, QA_HRS=7.8, HRS=+hrsPerFte.value;
+
     const devNeed=Math.round(monthlyTickets*DEV_HRS);
     const qaNeed=Math.round(monthlyTickets*QA_HRS);
-    const devAvail=devFte.value*HRS;
-    const qaAvail=qaFte.value*HRS;
+    const devAvailHrs=devFte.value*HRS;
+    const qaAvailHrs=qaFte.value*HRS;
 
     devNeeded.textContent=devNeed;
     qaNeeded.textContent=qaNeed;
-    devAvail.textContent=devAvail;
-    qaAvail.textContent=qaAvail;
+    devAvailEl.textContent=devAvailHrs;
+    qaAvailEl.textContent=qaAvailHrs;
 
-    const devSur=devAvail-devNeed;
-    const qaSur=qaAvail-qaNeed;
+    const devSur=devAvailHrs-devNeed;
+    const qaSur=qaAvailHrs-qaNeed;
 
     devSurplus.textContent=devSur;
     qaSurplus.textContent=qaSur;
