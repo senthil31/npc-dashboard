@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -51,10 +52,10 @@
 
   <div class="card">
     <h3>Backlog Type</h3>
-    <label>NPC</label><input value="172">
+    <label>NPC (Firm)</label><input value="172">
     <label>Customer Dependency</label><input value="54">
     <label>Manual → Automation</label><input value="113">
-    <label>UDS → Plug (Migration)</label><input value="206">
+    <label>UDS → Plug</label><input value="206">
   </div>
 
   <div class="card">
@@ -142,7 +143,7 @@ function recalc(){
   const inflow=+futureInflow.value/6;
 
   // 🔒 MANUAL CAPACITY FOR CHART
-  const forecastCapacity=+capacity.value;
+  const forecastCapacity=+225;
 
   let start=backlog;
   const sArr=[],cArr=[];
