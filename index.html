@@ -5,9 +5,7 @@
   <title>NPC Backlog & Capacity Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Data labels plugin -->
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
   <style>
@@ -35,31 +33,11 @@
       font-size: 14px;
       color: #475569;
     }
-    .kpi {
-      font-size: 26px;
-      font-weight: bold;
-    }
-    label {
-      font-size: 12px;
-      display: block;
-      margin-top: 8px;
-    }
-    input {
-      width: 100%;
-      padding: 6px;
-      margin-top: 4px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-    }
-    th, td {
-      border: 1px solid #e5e7eb;
-      padding: 6px;
-      text-align: center;
-      font-size: 13px;
-    }
+    .kpi { font-size: 26px; font-weight: bold; }
+    label { font-size: 12px; display: block; margin-top: 8px; }
+    input { width: 100%; padding: 6px; margin-top: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { border: 1px solid #e5e7eb; padding: 6px; text-align: center; font-size: 13px; }
     th { background: #f1f5f9; }
     .pos { color: #16a34a; font-weight: bold; }
     .neg { color: #dc2626; font-weight: bold; }
@@ -70,24 +48,12 @@
 
 <h1>NPC Backlog & Capacity Dashboard</h1>
 
-<!-- TOP KPIs -->
+<!-- KPIs -->
 <div class="grid">
-  <div class="card">
-    <h3>Current Backlog</h3>
-    <div class="kpi" id="currentBacklogKpi">0</div>
-  </div>
-  <div class="card">
-    <h3>Monthly Capacity</h3>
-    <div class="kpi" id="capacityKpi">225</div>
-  </div>
-  <div class="card">
-    <h3>Additional QA FTE Needed</h3>
-    <div class="kpi" id="addlQaTop">0</div>
-  </div>
-  <div class="card">
-    <h3>Additional Dev FTE Needed</h3>
-    <div class="kpi" id="addlDevTop">0</div>
-  </div>
+  <div class="card"><h3>Current Backlog</h3><div class="kpi" id="currentBacklogKpi">0</div></div>
+  <div class="card"><h3>Monthly Capacity</h3><div class="kpi" id="capacityKpi">225</div></div>
+  <div class="card"><h3>Additional QA FTE Needed</h3><div class="kpi" id="addlQaTop">0</div></div>
+  <div class="card"><h3>Additional Dev FTE Needed</h3><div class="kpi" id="addlDevTop">0</div></div>
 </div>
 
 <br>
@@ -104,50 +70,23 @@
 
   <div class="card">
     <h3>Backlog Type</h3>
-    <label>NPC</label>
-    <input id="npc" type="number" value="172">
-    <label>Customer Dependency</label>
-    <input id="custDep" type="number" value="54">
-    <label>Manual → Automation</label>
-    <input id="m2a" type="number" value="113">
-    <label>UDS → Plug (Migration)</label>
-    <input id="uds" type="number" value="206">
+    <label>NPC</label><input type="number" value="172">
+    <label>Customer Dependency</label><input type="number" value="54">
+    <label>Manual → Automation</label><input type="number" value="113">
+    <label>UDS → Plug</label><input type="number" value="206">
   </div>
 
   <div class="card">
     <h3>Capacity & FTE</h3>
-    <label>Monthly Capacity</label>
-    <input id="capacity" type="number" value="225">
-    <label>Dev FTE</label>
-    <input id="devFte" type="number" value="8">
-    <label>QA FTE</label>
-    <input id="qaFte" type="number" value="7">
+    <label>Monthly Capacity</label><input id="capacity" type="number" value="225">
+    <label>Dev FTE</label><input id="devFte" type="number" value="8">
+    <label>QA FTE</label><input id="qaFte" type="number" value="7">
   </div>
 </div>
 
 <br>
 
-<!-- MONTHLY SIMULATION -->
-<div class="card">
-  <h3>Monthly Simulation</h3>
-  <table id="simTable">
-    <thead>
-      <tr>
-        <th>Month</th>
-        <th>NPC</th>
-        <th>Yardi</th>
-        <th>Manual → Auto</th>
-        <th>Prospect</th>
-        <th>Total</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div>
-
-<br>
-
-<!-- DEV / QA DETAILS -->
+<!-- DEV / QA -->
 <div class="card">
   <h3>Dev & QA FTE Capacity</h3>
   <div class="grid">
@@ -170,7 +109,7 @@
 
 <br>
 
-<!-- FORECAST -->
+<!-- CHART -->
 <div class="card">
   <h3>6-Month Backlog Forecast</h3>
   <canvas id="forecastChart" height="120"></canvas>
@@ -178,68 +117,22 @@
 
 <script>
   const months = ["Jan","Feb","Mar","Apr","May","Jun"];
-  const simDefaults = { npc:110, yardi:34, m2a:20, prospect:67 };
-  const tbody = document.querySelector("#simTable tbody");
-
-  months.forEach(m => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${m}</td>
-      <td><input value="${simDefaults.npc}"></td>
-      <td><input value="${simDefaults.yardi}"></td>
-      <td><input value="${simDefaults.m2a}"></td>
-      <td><input value="${simDefaults.prospect}"></td>
-      <td class="total">0</td>`;
-    tbody.appendChild(tr);
-  });
 
   const chart = new Chart(document.getElementById("forecastChart"), {
     type: "line",
-    data: {
-      labels: months,
-      datasets: [
-        {
-          label: "Start Backlog",
-          data: [],
-          borderColor: "#0f172a",
-          backgroundColor: "#0f172a",
-          tension: 0.2,
-          datalabels: {
-            align: "top",
-            anchor: "end",
-            color: "#0f172a",
-            font: { weight: "bold" },
-            formatter: Math.round
-          }
-        },
-        {
-          label: "Capacity",
-          data: [],
-          borderColor: "#16a34a",
-          backgroundColor: "#16a34a",
-          borderDash: [6,4],
-          datalabels: {
-            align: "bottom",
-            anchor: "end",
-            color: "#16a34a",
-            font: { weight: "bold" },
-            formatter: Math.round
-          }
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { position: "top" },
-        datalabels: { clamp: true, clip: false }
-      },
-      scales: {
-        y: { beginAtZero: true, ticks: { precision: 0 } }
-      }
-    },
-    plugins: [ChartDataLabels]
+    data: { labels: months, datasets: [
+      { label: "Start Backlog", data: [], borderColor: "#0f172a", tension: 0.2,
+        datalabels:{align:"top",anchor:"end",formatter:Math.round}},
+      { label: "Capacity", data: [], borderColor: "#16a34a", borderDash:[6,4],
+        datalabels:{align:"bottom",anchor:"end",formatter:Math.round}}
+    ]},
+    options:{ plugins:{ datalabels:{clamp:true} }, scales:{ y:{beginAtZero:true}} },
+    plugins:[ChartDataLabels]
   });
+
+  const devAvailEl = devAvail, qaAvailEl = qaAvail;
+  const devSurplusEl = devSurplus, qaSurplusEl = qaSurplus;
+  const addlDevEl = addlDev, addlQaEl = addlQa;
 
   function recalc() {
     currentBacklogKpi.textContent = currentBacklog.value;
@@ -247,40 +140,25 @@
 
     let start = +currentBacklog.value;
     const cap = +capacity.value;
+    const MONTHLY_INFLOW = 110 + 67;
 
-    // ✅ FIXED: incremental monthly inflow
-    const MONTHLY_NPC = 110;
-    const MONTHLY_PROSPECT = 67;
-    const MONTHLY_INFLOW = MONTHLY_NPC + MONTHLY_PROSPECT;
-
-    const sArr = [];
-    const cArr = [];
-
-    for (let i = 0; i < 6; i++) {
+    const sArr=[], cArr=[];
+    for(let i=0;i<6;i++){
       sArr.push(start);
       cArr.push(cap);
       start = Math.max(0, start + MONTHLY_INFLOW - cap);
     }
-
     chart.data.datasets[0].data = sArr;
     chart.data.datasets[1].data = cArr;
     chart.update();
 
-    let monthlyTickets = 0;
-    document.querySelectorAll("#simTable tbody tr").forEach(r => {
-      let t = 0;
-      r.querySelectorAll("input").forEach(i => t += +i.value);
-      r.querySelector(".total").textContent = t;
-      monthlyTickets += t;
-    });
-    monthlyTickets /= 6;
-
-    const DEV_HRS = 8.9, QA_HRS = 7.8, HRS = 160;
+    const DEV_HRS=8.9, QA_HRS=7.8, HRS=160;
+    const monthlyTickets = 231;
 
     const devNeed = Math.round(monthlyTickets * DEV_HRS);
     const qaNeed  = Math.round(monthlyTickets * QA_HRS);
-    const devAvail = +devFte.value * HRS;
-    const qaAvail  = +qaFte.value * HRS;
+    const devAvail = devFte.value * HRS;
+    const qaAvail  = qaFte.value * HRS;
 
     devNeeded.textContent = devNeed;
     qaNeeded.textContent = qaNeed;
@@ -290,21 +168,19 @@
     const devSur = devAvail - devNeed;
     const qaSur  = qaAvail - qaNeed;
 
-    devSurplus.textContent = devSur;
-    devSurplus.className = devSur >= 0 ? "pos" : "neg";
-    qaSurplus.textContent = qaSur;
-    qaSurplus.className = qaSur >= 0 ? "pos" : "neg";
+    devSurplusEl.textContent = devSur;
+    qaSurplusEl.textContent = qaSur;
 
-    const addDev = devSur >= 0 ? 0 : Math.ceil(Math.abs(devSur) / HRS);
-    const addQa  = qaSur >= 0 ? 0 : Math.ceil(Math.abs(qaSur) / HRS);
+    const addDev = devSur>=0?0:Math.ceil(Math.abs(devSur)/HRS);
+    const addQa  = qaSur>=0?0:Math.ceil(Math.abs(qaSur)/HRS);
 
-    addlDev.textContent = addDev;
-    addlQa.textContent = addQa;
+    addlDevEl.textContent = addDev;
+    addlQaEl.textContent = addQa;
     addlDevTop.textContent = addDev;
     addlQaTop.textContent = addQa;
   }
 
-  document.querySelectorAll("input").forEach(i => i.addEventListener("input", recalc));
+  document.querySelectorAll("input").forEach(i=>i.addEventListener("input",recalc));
   recalc();
 </script>
 
