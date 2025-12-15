@@ -7,7 +7,7 @@
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Data labels -->
+  <!-- Data labels plugin -->
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
   <style>
@@ -98,14 +98,20 @@
     <h3>Backlog Inputs</h3>
     <label>Current Backlog</label>
     <input id="currentBacklog" type="number" value="545">
+    <label>Future Inflow (6 months)</label>
+    <input id="futureInflow" type="number" value="404">
   </div>
 
   <div class="card">
-    <h3>Monthly Inflow Assumptions</h3>
-    <label>NPC (Monthly)</label>
-    <input id="npcMonthly" type="number" value="110">
-    <label>Prospect (Monthly)</label>
-    <input id="prospectMonthly" type="number" value="67">
+    <h3>Backlog Type</h3>
+    <label>NPC</label>
+    <input id="npc" type="number" value="172">
+    <label>Customer Dependency</label>
+    <input id="custDep" type="number" value="54">
+    <label>Manual → Automation</label>
+    <input id="m2a" type="number" value="113">
+    <label>UDS → Plug (Migration)</label>
+    <input id="uds" type="number" value="206">
   </div>
 
   <div class="card">
@@ -123,7 +129,7 @@
 
 <!-- MONTHLY SIMULATION -->
 <div class="card">
-  <h3>Monthly Simulation (Demand Mix)</h3>
+  <h3>Monthly Simulation</h3>
   <table id="simTable">
     <thead>
       <tr>
@@ -141,7 +147,7 @@
 
 <br>
 
-<!-- DEV / QA -->
+<!-- DEV / QA DETAILS -->
 <div class="card">
   <h3>Dev & QA FTE Capacity</h3>
   <div class="grid">
@@ -166,15 +172,15 @@
 
 <!-- FORECAST -->
 <div class="card">
-  <h3>6-Month Incremental Backlog Forecast</h3>
+  <h3>6-Month Backlog Forecast</h3>
   <canvas id="forecastChart" height="120"></canvas>
 </div>
 
 <script>
   const months = ["Jan","Feb","Mar","Apr","May","Jun"];
   const simDefaults = { npc:110, yardi:34, m2a:20, prospect:67 };
-
   const tbody = document.querySelector("#simTable tbody");
+
   months.forEach(m => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -193,7 +199,7 @@
       labels: months,
       datasets: [
         {
-          label: "Backlog",
+          label: "Start Backlog",
           data: [],
           borderColor: "#0f172a",
           backgroundColor: "#0f172a",
@@ -202,7 +208,8 @@
             align: "top",
             anchor: "end",
             color: "#0f172a",
-            font: { weight: "bold" }
+            font: { weight: "bold" },
+            formatter: Math.round
           }
         },
         {
@@ -215,14 +222,21 @@
             align: "bottom",
             anchor: "end",
             color: "#16a34a",
-            font: { weight: "bold" }
+            font: { weight: "bold" },
+            formatter: Math.round
           }
         }
       ]
     },
     options: {
-      plugins: { legend: { position: "top" }, datalabels: { clamp: true } },
-      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      responsive: true,
+      plugins: {
+        legend: { position: "top" },
+        datalabels: { clamp: true, clip: false }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0 } }
+      }
     },
     plugins: [ChartDataLabels]
   });
@@ -237,35 +251,34 @@
     currentBacklogKpi.textContent = currentBacklog.value;
     capacityKpi.textContent = capacity.value;
 
-    const inflow = +npcMonthly.value + +prospectMonthly.value;
-    const cap = +capacity.value;
-
     let start = +currentBacklog.value;
-    const backlogArr = [], capArr = [];
+    const inflow = +futureInflow.value;
+    const cap = +capacity.value;
+    const sArr=[], cArr=[];
 
-    for (let i = 0; i < 6; i++) {
-      backlogArr.push(start);
-      capArr.push(cap);
-      start = Math.max(0, start + inflow - cap);
+    for (let i=0;i<6;i++){
+      sArr.push(start);
+      cArr.push(cap);
+      start = Math.max(0, start + inflow/6 - cap);
     }
 
-    chart.data.datasets[0].data = backlogArr;
-    chart.data.datasets[1].data = capArr;
+    chart.data.datasets[0].data = sArr;
+    chart.data.datasets[1].data = cArr;
     chart.update();
 
     let monthlyTickets = 0;
-    document.querySelectorAll("#simTable tbody tr").forEach(r => {
-      let t = 0;
-      r.querySelectorAll("input").forEach(i => t += +i.value);
-      r.querySelector(".total").textContent = t;
+    document.querySelectorAll("#simTable tbody tr").forEach(r=>{
+      let t=0;
+      r.querySelectorAll("input").forEach(i=>t+=+i.value);
+      r.querySelector(".total").textContent=t;
       monthlyTickets += t;
     });
     monthlyTickets /= 6;
 
     const DEV_HRS = 8.9, QA_HRS = 7.8, HRS = 160;
+
     const devNeed = Math.round(monthlyTickets * DEV_HRS);
     const qaNeed  = Math.round(monthlyTickets * QA_HRS);
-
     const devAvail = +devFte.value * HRS;
     const qaAvail  = +qaFte.value * HRS;
 
@@ -278,12 +291,12 @@
     const qaSur  = qaAvail - qaNeed;
 
     devSurplus.textContent = devSur;
-    devSurplus.className = devSur >= 0 ? "pos" : "neg";
+    devSurplus.className = devSur>=0?"pos":"neg";
     qaSurplus.textContent = qaSur;
-    qaSurplus.className = qaSur >= 0 ? "pos" : "neg";
+    qaSurplus.className = qaSur>=0?"pos":"neg";
 
-    const addDev = devSur >= 0 ? 0 : Math.ceil(Math.abs(devSur) / HRS);
-    const addQa  = qaSur >= 0 ? 0 : Math.ceil(Math.abs(qaSur) / HRS);
+    const addDev = devSur>=0?0:Math.ceil(Math.abs(devSur)/HRS);
+    const addQa  = qaSur>=0?0:Math.ceil(Math.abs(qaSur)/HRS);
 
     addlDev.textContent = addDev;
     addlQa.textContent = addQa;
@@ -291,7 +304,7 @@
     addlQaTop.textContent = addQa;
   }
 
-  document.querySelectorAll("input").forEach(i => i.addEventListener("input", recalc));
+  document.querySelectorAll("input").forEach(i=>i.addEventListener("input",recalc));
   recalc();
 </script>
 
