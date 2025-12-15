@@ -56,7 +56,7 @@
 <!-- KPIs -->
 <div class="grid">
   <div class="card"><h3>Current Backlog</h3><div class="kpi" id="currentBacklogKpi">0</div></div>
-  <div class="card"><h3>Monthly Capacity</h3><div class="kpi" id="capacityKpi">225</div></div>
+  <div class="card"><h3>Monthly Capacity</h3><div class="kpi" id="capacityKpi">0</div></div>
   <div class="card"><h3>Additional QA FTE Needed</h3><div class="kpi" id="addlQaTop">0</div></div>
   <div class="card"><h3>Additional Dev FTE Needed</h3><div class="kpi" id="addlDevTop">0</div></div>
 </div>
@@ -69,6 +69,8 @@
     <h3>Backlog Inputs</h3>
     <label>Current Backlog</label>
     <input id="currentBacklog" type="number" value="545">
+    <label>Future Inflow (6 months)</label>
+    <input id="futureInflow" type="number" value="404">
   </div>
 
   <div class="card">
@@ -79,6 +81,8 @@
     <input id="devFte" type="number" value="8">
     <label>QA FTE</label>
     <input id="qaFte" type="number" value="7">
+    <label>Hours per FTE (monthly)</label>
+    <input id="hrsPerFte" type="number" value="160">
   </div>
 </div>
 
@@ -152,29 +156,13 @@
 
   const chart = new Chart(document.getElementById("forecastChart"), {
     type: "line",
-    data: {
-      labels: months,
-      datasets: [
-        {
-          label: "Start Backlog",
-          data: [],
-          borderColor: "#0f172a",
-          tension: 0.2,
-          datalabels:{ align:"top", anchor:"end", formatter:Math.round }
-        },
-        {
-          label: "Capacity",
-          data: [],
-          borderColor: "#16a34a",
-          borderDash:[6,4],
-          datalabels:{ align:"bottom", anchor:"end", formatter:Math.round }
-        }
-      ]
-    },
-    options:{
-      plugins:{ datalabels:{ clamp:true } },
-      scales:{ y:{ beginAtZero:true } }
-    },
+    data: { labels: months, datasets: [
+      { label:"Start Backlog", data:[], borderColor:"#0f172a", tension:0.2,
+        datalabels:{ align:"top", anchor:"end", formatter:Math.round } },
+      { label:"Capacity", data:[], borderColor:"#16a34a", borderDash:[6,4],
+        datalabels:{ align:"bottom", anchor:"end", formatter:Math.round } }
+    ]},
+    options:{ plugins:{ datalabels:{ clamp:true } }, scales:{ y:{ beginAtZero:true } } },
     plugins:[ChartDataLabels]
   });
 
@@ -182,63 +170,54 @@
     currentBacklogKpi.textContent = currentBacklog.value;
     capacityKpi.textContent = capacity.value;
 
-    /* ---- Incremental backlog chart ---- */
+    /* Chart logic */
     let b = +currentBacklog.value;
     const cap = +capacity.value;
     const MONTHLY_INFLOW = 110 + 67;
 
     const bArr=[], cArr=[];
-    for(let i=0;i<6;i++){
-      bArr.push(b);
-      cArr.push(cap);
-      b = Math.max(0, b + MONTHLY_INFLOW - cap);
-    }
-
-    chart.data.datasets[0].data = bArr;
-    chart.data.datasets[1].data = cArr;
+    for(let i=0;i<6;i++){ bArr.push(b); cArr.push(cap); b=Math.max(0,b+MONTHLY_INFLOW-cap); }
+    chart.data.datasets[0].data=bArr;
+    chart.data.datasets[1].data=cArr;
     chart.update();
 
-    /* ---- Monthly simulation totals ---- */
-    let monthlyTickets = 0;
-    document.querySelectorAll("#simTable tbody tr").forEach(r => {
-      let t = 0;
-      r.querySelectorAll("input").forEach(i => t += +i.value);
-      r.querySelector(".total").textContent = t;
-      monthlyTickets += t;
+    /* Simulation totals */
+    let monthlyTickets=0;
+    document.querySelectorAll("#simTable tbody tr").forEach(r=>{
+      let t=0; r.querySelectorAll("input").forEach(i=>t+=+i.value);
+      r.querySelector(".total").textContent=t; monthlyTickets+=t;
     });
-    monthlyTickets /= 6;
+    monthlyTickets/=6;
 
-    /* ---- Dev / QA calc ---- */
-    const DEV_HRS=8.9, QA_HRS=7.8, HRS=160;
+    /* Dev / QA math */
+    const DEV_HRS=8.9, QA_HRS=7.8, HRS=+hrsPerFte.value;
 
-    const devNeed = Math.round(monthlyTickets * DEV_HRS);
-    const qaNeed  = Math.round(monthlyTickets * QA_HRS);
-    const devAvail = devFte.value * HRS;
-    const qaAvail  = qaFte.value * HRS;
+    const devNeed=Math.round(monthlyTickets*DEV_HRS);
+    const qaNeed=Math.round(monthlyTickets*QA_HRS);
+    const devAvail=devFte.value*HRS;
+    const qaAvail=qaFte.value*HRS;
 
-    devNeeded.textContent = devNeed;
-    qaNeeded.textContent = qaNeed;
-    devAvail.textContent = devAvail;
-    qaAvail.textContent = qaAvail;
+    devNeeded.textContent=devNeed;
+    qaNeeded.textContent=qaNeed;
+    devAvail.textContent=devAvail;
+    qaAvail.textContent=qaAvail;
 
-    const devSur = devAvail - devNeed;
-    const qaSur  = qaAvail - qaNeed;
+    const devSur=devAvail-devNeed;
+    const qaSur=qaAvail-qaNeed;
 
-    devSurplus.textContent = devSur;
-    qaSurplus.textContent = qaSur;
+    devSurplus.textContent=devSur;
+    qaSurplus.textContent=qaSur;
 
-    const addDev = devSur>=0?0:Math.ceil(Math.abs(devSur)/HRS);
-    const addQa  = qaSur>=0?0:Math.ceil(Math.abs(qaSur)/HRS);
+    const addDev=devSur>=0?0:Math.ceil(Math.abs(devSur)/HRS);
+    const addQa=qaSur>=0?0:Math.ceil(Math.abs(qaSur)/HRS);
 
-    addlDev.textContent = addDev;
-    addlQa.textContent = addQa;
-    addlDevTop.textContent = addDev;
-    addlQaTop.textContent = addQa;
+    addlDev.textContent=addDev;
+    addlQa.textContent=addQa;
+    addlDevTop.textContent=addDev;
+    addlQaTop.textContent=addQa;
   }
 
-  document.querySelectorAll("input").forEach(i =>
-    i.addEventListener("input", recalc)
-  );
+  document.querySelectorAll("input").forEach(i=>i.addEventListener("input",recalc));
   recalc();
 </script>
 
