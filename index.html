@@ -4,7 +4,11 @@
   <meta charset="UTF-8" />
   <title>NPC Backlog & Capacity Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Data labels plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
   <style>
     body {
@@ -175,7 +179,6 @@
 <script>
   const months = ["Jan","Feb","Mar","Apr","May","Jun"];
   const simDefaults = { npc:110, yardi:34, m2a:20, prospect:67 };
-
   const tbody = document.querySelector("#simTable tbody");
 
   months.forEach(m => {
@@ -192,16 +195,55 @@
 
   const chart = new Chart(document.getElementById("forecastChart"), {
     type: "line",
-    data: { labels: months, datasets: [
-      { label:"Start Backlog", data:[], borderColor:"#0f172a" },
-      { label:"Capacity", data:[], borderColor:"#16a34a" }
-    ]}
+    data: {
+      labels: months,
+      datasets: [
+        {
+          label: "Start Backlog",
+          data: [],
+          borderColor: "#0f172a",
+          backgroundColor: "#0f172a",
+          tension: 0.2,
+          datalabels: {
+            align: "top",
+            anchor: "end",
+            color: "#0f172a",
+            font: { weight: "bold" },
+            formatter: Math.round
+          }
+        },
+        {
+          label: "Capacity",
+          data: [],
+          borderColor: "#16a34a",
+          backgroundColor: "#16a34a",
+          borderDash: [6,4],
+          datalabels: {
+            align: "bottom",
+            anchor: "end",
+            color: "#16a34a",
+            font: { weight: "bold" },
+            formatter: Math.round
+          }
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: "top" },
+        datalabels: { clamp: true, clip: false }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0 } }
+      }
+    },
+    plugins: [ChartDataLabels]
   });
 
   const currentBacklogKpi = document.getElementById("currentBacklogKpi");
   const addlQaTop = document.getElementById("addlQaTop");
   const addlDevTop = document.getElementById("addlDevTop");
-
   const devAvailEl = document.getElementById("devAvail");
   const qaAvailEl = document.getElementById("qaAvail");
 
@@ -212,13 +254,14 @@
     let start = +currentBacklog.value;
     const inflow = +futureInflow.value;
     const cap = +capacity.value;
-
     const sArr=[], cArr=[];
+
     for (let i=0;i<6;i++){
       sArr.push(start);
       cArr.push(cap);
       start = Math.max(0, start + inflow/6 - cap);
     }
+
     chart.data.datasets[0].data = sArr;
     chart.data.datasets[1].data = cArr;
     chart.update();
@@ -236,7 +279,6 @@
 
     const devNeed = Math.round(monthlyTickets * DEV_HRS);
     const qaNeed  = Math.round(monthlyTickets * QA_HRS);
-
     const devAvail = +devFte.value * HRS;
     const qaAvail  = +qaFte.value * HRS;
 
