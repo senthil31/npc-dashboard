@@ -82,7 +82,7 @@
   </div>
   <div class="card">
     <h3>Additional Dev FTE Needed</h3>
-    <div class="kpi" id="addlDev">0</div>
+    <div class="kpi" id="addlDevTop">0</div>
   </div>
 </div>
 
@@ -152,7 +152,7 @@
       <div>Hours Needed: <span id="devNeeded"></span></div>
       <div>Hours Available: <span id="devAvail"></span></div>
       <div>Surplus / Deficit: <span id="devSurplus"></span></div>
-      <div><strong>Additional Dev FTE: <span id="addlDev2"></span></strong></div>
+      <div><strong>Additional Dev FTE: <span id="addlDev"></span></strong></div>
     </div>
     <div>
       <strong>QA</strong>
@@ -175,6 +175,7 @@
 <script>
   const months = ["Jan","Feb","Mar","Apr","May","Jun"];
   const simDefaults = { npc:110, yardi:34, m2a:20, prospect:67 };
+
   const tbody = document.querySelector("#simTable tbody");
 
   months.forEach(m => {
@@ -199,6 +200,10 @@
 
   const currentBacklogKpi = document.getElementById("currentBacklogKpi");
   const addlQaTop = document.getElementById("addlQaTop");
+  const addlDevTop = document.getElementById("addlDevTop");
+
+  const devAvailEl = document.getElementById("devAvail");
+  const qaAvailEl = document.getElementById("qaAvail");
 
   function recalc() {
     currentBacklogKpi.textContent = currentBacklog.value;
@@ -207,14 +212,13 @@
     let start = +currentBacklog.value;
     const inflow = +futureInflow.value;
     const cap = +capacity.value;
-    const sArr=[], cArr=[];
 
+    const sArr=[], cArr=[];
     for (let i=0;i<6;i++){
       sArr.push(start);
       cArr.push(cap);
       start = Math.max(0, start + inflow/6 - cap);
     }
-
     chart.data.datasets[0].data = sArr;
     chart.data.datasets[1].data = cArr;
     chart.update();
@@ -229,6 +233,7 @@
     monthlyTickets /= 6;
 
     const DEV_HRS = 8.9, QA_HRS = 7.8, HRS = 160;
+
     const devNeed = Math.round(monthlyTickets * DEV_HRS);
     const qaNeed  = Math.round(monthlyTickets * QA_HRS);
 
@@ -237,8 +242,8 @@
 
     devNeeded.textContent = devNeed;
     qaNeeded.textContent = qaNeed;
-    devAvail.textContent = devAvail;
-    qaAvail.textContent = qaAvail;
+    devAvailEl.textContent = devAvail;
+    qaAvailEl.textContent = qaAvail;
 
     const devSur = devAvail - devNeed;
     const qaSur  = qaAvail - qaNeed;
@@ -252,8 +257,8 @@
     const addQa  = qaSur>=0?0:Math.ceil(Math.abs(qaSur)/HRS);
 
     addlDev.textContent = addDev;
-    addlDev2.textContent = addDev;
     addlQa.textContent = addQa;
+    addlDevTop.textContent = addDev;
     addlQaTop.textContent = addQa;
   }
 
