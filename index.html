@@ -75,14 +75,10 @@
 
   <div class="card">
     <h3>Backlog Type</h3>
-    <label>NPC (Firm)</label>
-    <input id="npcFirm" type="number" value="172">
-    <label>Customer Dependency (Unfirm)</label>
-    <input id="custDep" type="number" value="54">
-    <label>Manual → Automation</label>
-    <input id="m2a" type="number" value="113">
-    <label>UDS → Plug</label>
-    <input id="uds" type="number" value="206">
+    <label>NPC (Firm)</label><input id="npcFirm" type="number" value="172">
+    <label>Customer Dependency (Unfirm)</label><input id="custDep" type="number" value="54">
+    <label>Manual → Automation</label><input id="m2a" type="number" value="113">
+    <label>UDS → Plug</label><input id="uds" type="number" value="206">
     <div style="margin-top:8px;font-size:13px;">
       Weighted Unfirm (60%): <strong><span id="weightedUnfirm"></span></strong><br>
       Total Starting Backlog: <strong><span id="totalStartBacklog"></span></strong>
@@ -91,7 +87,7 @@
 
   <div class="card">
     <h3>Capacity & FTE</h3>
-    <label>Monthly Capacity</label>
+    <label>Monthly Capacity (auto / manual)</label>
     <input id="capacity" type="number" value="225">
     <label>Dev FTE</label>
     <input id="devFte" type="number" value="8">
@@ -182,31 +178,41 @@
     plugins:[ChartDataLabels]
   });
 
-  /* 🔧 FIX: cache elements (no name collision) */
   const devAvailEl = document.getElementById("devAvail");
   const qaAvailEl  = document.getElementById("qaAvail");
 
   function recalc() {
     currentBacklogKpi.textContent = currentBacklog.value;
-    capacityKpi.textContent = capacity.value;
 
-    /* Backlog type */
+    /* Backlog Type */
     const weighted = Math.round(custDep.value * 0.6);
     weightedUnfirm.textContent = weighted;
     totalStartBacklog.textContent =
       +npcFirm.value + weighted + +m2a.value + +uds.value;
 
-    /* Chart */
+    /* ---- AUTO CAPACITY FROM FTE ---- */
+    const DEV_HRS = 8.9, QA_HRS = 7.8;
+    const HRS = +hrsPerFte.value;
+
+    const devCap = Math.floor((devFte.value * HRS) / DEV_HRS);
+    const qaCap  = Math.floor((qaFte.value * HRS) / QA_HRS);
+    const autoCapacity = Math.min(devCap, qaCap);
+
+    /* Update capacity input automatically */
+    capacity.value = autoCapacity;
+    capacityKpi.textContent = autoCapacity;
+
+    /* ---- CHART ---- */
     let b = +currentBacklog.value;
-    const cap = +capacity.value;
     const MONTHLY_INFLOW = 110 + 67;
+
     const bArr=[], cArr=[];
-    for(let i=0;i<6;i++){ bArr.push(b); cArr.push(cap); b=Math.max(0,b+MONTHLY_INFLOW-cap); }
+    for(let i=0;i<6;i++){ bArr.push(b); cArr.push(autoCapacity); b=Math.max(0,b+MONTHLY_INFLOW-autoCapacity); }
     chart.data.datasets[0].data=bArr;
     chart.data.datasets[1].data=cArr;
     chart.update();
 
-    /* Simulation */
+    /* ---- SIMULATION ---- */
     let monthlyTickets=0;
     document.querySelectorAll("#simTable tbody tr").forEach(r=>{
       let t=0; r.querySelectorAll("input").forEach(i=>t+=+i.value);
@@ -214,9 +220,7 @@
     });
     monthlyTickets/=6;
 
-    /* Dev / QA */
-    const DEV_HRS=8.9, QA_HRS=7.8, HRS=+hrsPerFte.value;
-
+    /* ---- DEV / QA ---- */
     const devNeed=Math.round(monthlyTickets*DEV_HRS);
     const qaNeed=Math.round(monthlyTickets*QA_HRS);
     const devAvailHrs=devFte.value*HRS;
