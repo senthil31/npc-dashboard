@@ -241,25 +241,25 @@
     plugins: [ChartDataLabels]
   });
 
-  const currentBacklogKpi = document.getElementById("currentBacklogKpi");
-  const addlQaTop = document.getElementById("addlQaTop");
-  const addlDevTop = document.getElementById("addlDevTop");
-  const devAvailEl = document.getElementById("devAvail");
-  const qaAvailEl = document.getElementById("qaAvail");
-
   function recalc() {
     currentBacklogKpi.textContent = currentBacklog.value;
     capacityKpi.textContent = capacity.value;
 
     let start = +currentBacklog.value;
-    const inflow = +futureInflow.value;
     const cap = +capacity.value;
-    const sArr=[], cArr=[];
 
-    for (let i=0;i<6;i++){
+    // ✅ FIXED: incremental monthly inflow
+    const MONTHLY_NPC = 110;
+    const MONTHLY_PROSPECT = 67;
+    const MONTHLY_INFLOW = MONTHLY_NPC + MONTHLY_PROSPECT;
+
+    const sArr = [];
+    const cArr = [];
+
+    for (let i = 0; i < 6; i++) {
       sArr.push(start);
       cArr.push(cap);
-      start = Math.max(0, start + inflow/6 - cap);
+      start = Math.max(0, start + MONTHLY_INFLOW - cap);
     }
 
     chart.data.datasets[0].data = sArr;
@@ -267,10 +267,10 @@
     chart.update();
 
     let monthlyTickets = 0;
-    document.querySelectorAll("#simTable tbody tr").forEach(r=>{
-      let t=0;
-      r.querySelectorAll("input").forEach(i=>t+=+i.value);
-      r.querySelector(".total").textContent=t;
+    document.querySelectorAll("#simTable tbody tr").forEach(r => {
+      let t = 0;
+      r.querySelectorAll("input").forEach(i => t += +i.value);
+      r.querySelector(".total").textContent = t;
       monthlyTickets += t;
     });
     monthlyTickets /= 6;
@@ -284,19 +284,19 @@
 
     devNeeded.textContent = devNeed;
     qaNeeded.textContent = qaNeed;
-    devAvailEl.textContent = devAvail;
-    qaAvailEl.textContent = qaAvail;
+    devAvail.textContent = devAvail;
+    qaAvail.textContent = qaAvail;
 
     const devSur = devAvail - devNeed;
     const qaSur  = qaAvail - qaNeed;
 
     devSurplus.textContent = devSur;
-    devSurplus.className = devSur>=0?"pos":"neg";
+    devSurplus.className = devSur >= 0 ? "pos" : "neg";
     qaSurplus.textContent = qaSur;
-    qaSurplus.className = qaSur>=0?"pos":"neg";
+    qaSurplus.className = qaSur >= 0 ? "pos" : "neg";
 
-    const addDev = devSur>=0?0:Math.ceil(Math.abs(devSur)/HRS);
-    const addQa  = qaSur>=0?0:Math.ceil(Math.abs(qaSur)/HRS);
+    const addDev = devSur >= 0 ? 0 : Math.ceil(Math.abs(devSur) / HRS);
+    const addQa  = qaSur >= 0 ? 0 : Math.ceil(Math.abs(qaSur) / HRS);
 
     addlDev.textContent = addDev;
     addlQa.textContent = addQa;
@@ -304,7 +304,7 @@
     addlQaTop.textContent = addQa;
   }
 
-  document.querySelectorAll("input").forEach(i=>i.addEventListener("input",recalc));
+  document.querySelectorAll("input").forEach(i => i.addEventListener("input", recalc));
   recalc();
 </script>
 
