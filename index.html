@@ -178,13 +178,62 @@ months.forEach(m=>{
   tbody.appendChild(tr);
 });
 
-const chart=new Chart(document.getElementById("forecastChart"),{
-  type:"line",
-  data:{labels:months,datasets:[
-    {label:"Backlog",data:[],borderColor:"#0f172a",tension:0.2},
-    {label:"Capacity",data:[],borderColor:"#16a34a",borderDash:[6,4]}
-  ]},
-  options:{scales:{y:{beginAtZero:true}}}
+const chart = new Chart(document.getElementById("forecastChart"), {
+  type: "line",
+  data: {
+    labels: months,
+    datasets: [
+      {
+        label: "Backlog",
+        data: [],
+        borderColor: "#0f172a",
+        backgroundColor: "#0f172a",
+        tension: 0.2,
+        pointRadius: 4,
+        datalabels: {
+          display: true,
+          align: "top",
+          anchor: "end",
+          color: "#0f172a",
+          font: { weight: "bold", size: 11 },
+          formatter: Math.round
+        }
+      },
+      {
+        label: "Capacity",
+        data: [],
+        borderColor: "#16a34a",
+        backgroundColor: "#16a34a",
+        borderDash: [6, 4],
+        pointRadius: 4,
+        datalabels: {
+          display: true,
+          align: "bottom",
+          anchor: "end",
+          color: "#16a34a",
+          font: { weight: "bold", size: 11 },
+          formatter: Math.round
+        }
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: "top" },
+      datalabels: {
+        clamp: true,
+        clip: false
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: { precision: 0 }
+      }
+    }
+  },
+  plugins: [ChartDataLabels]
 });
 
 capacity.addEventListener("input",()=>isManualCapacity=true);
