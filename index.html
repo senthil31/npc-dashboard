@@ -46,6 +46,9 @@
     th { background: #f1f5f9; }
     .pos { color: #16a34a; font-weight: bold; }
     .neg { color: #dc2626; font-weight: bold; }
+    .backlog-summary {
+  display: none;
+}
   </style>
 </head>
 
@@ -79,9 +82,9 @@
     <label>Customer Dependency</label><input id="custDep" type="number" value="54">
     <label>Manual → Automation</label><input id="m2a" type="number" value="113">
     <label>UDS → Plug (Migration)</label><input id="uds" type="number" value="206">
-    <div style="margin-top:8px;font-size:13px;">
-      Weighted Unfirm (60%): <strong><span id="weightedUnfirm"></span></strong><br>
-      Total Starting Backlog: <strong><span id="totalStartBacklog"></span></strong>
+   <div class="backlog-summary">
+  Weighted Unfirm (60%): <strong><span id="weightedUnfirm"></span></strong><br>
+  Total Starting Backlog: <strong><span id="totalStartBacklog"></span></strong>
     </div>
   </div>
 
