@@ -157,6 +157,10 @@
 </div>
 
 <script>
+const devAvailEl   = document.getElementById("devAvail");
+const qaAvailEl    = document.getElementById("qaAvail");
+const devSurplusEl = document.getElementById("devSurplus");
+const qaSurplusEl  = document.getElementById("qaSurplus");
 const months=["Jan","Feb","Mar","Apr","May","Jun"];
 const simDefaults={npc:110,yardi:34,m2a:20,prospect:67};
 let isManualCapacity=false;
@@ -231,8 +235,8 @@ function recalc(){
   const devSur=devAvail-devNeed;
   const qaSur=qaAvail-qaNeed;
 
-  devSurplus.textContent=devSur;
-  qaSurplus.textContent=qaSur;
+  devSurplusEl.textContent=devSur;
+  qaSurplusEl.textContent=qaSur;
 
   addlDev.textContent=devSur>=0?0:Math.ceil(Math.abs(devSur)/HRS);
   addlQa.textContent=qaSur>=0?0:Math.ceil(Math.abs(qaSur)/HRS);
