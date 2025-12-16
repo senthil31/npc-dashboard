@@ -63,8 +63,25 @@
   .form-grid {
     grid-template-columns: repeat(3, 1fr);
   }
-  .full-width {
+  .form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+/* Desktop layout */
+@media (min-width: 1024px) {
+  .form-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* MUST be outside media query */
+.full-width {
   grid-column: 1 / -1;
+}
+  .backlog-inputs {
+  grid-template-columns: repeat(2, 1fr) !important;
 }
 }
   </style>
@@ -90,7 +107,7 @@
   <!-- Backlog Inputs -->
   <div class="card">
     <h3>Backlog Inputs</h3>
-    <div class="form-grid">
+<div class="form-grid backlog-inputs">
       <div>
         <label>Current Backlog</label>
         <input id="currentBacklog" type="number" value="545">
