@@ -53,6 +53,17 @@
 
     /* Hide internal backlog math from UI */
     .backlog-summary { display: none; }
+    .form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (min-width: 1024px) {
+  .form-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
   </style>
 </head>
 
@@ -71,28 +82,43 @@
 <br>
 
 <!-- INPUTS -->
-<div class="card">
-  <h3>Backlog Inputs</h3>
+<div class="grid">
 
-  <div class="form-grid">
-    <div>
-      <label>Current Backlog</label>
-      <input id="currentBacklog" type="number" value="545">
-    </div>
-
-    <div>
-      <label>Future Inflow (6 months)</label>
-      <input id="futureInflow" type="number" value="404">
+  <div class="card">
+    <h3>Backlog Inputs</h3>
+    <div class="form-grid">
+      <div>
+        <label>Current Backlog</label>
+        <input id="currentBacklog" type="number" value="545">
+      </div>
+      <div>
+        <label>Future Inflow (6 months)</label>
+        <input id="futureInflow" type="number" value="404">
+      </div>
     </div>
   </div>
-</div>
 
   <div class="card">
     <h3>Backlog Type</h3>
-    <label>NPC</label><input id="npcFirm" type="number" value="172">
-    <label>Customer Dependency</label><input id="custDep" type="number" value="54">
-    <label>Manual → Automation</label><input id="m2a" type="number" value="113">
-    <label>UDS → Plug (Migration)</label><input id="uds" type="number" value="206">
+    <div class="form-grid">
+      <div>
+        <label>NPC</label>
+        <input id="npcFirm" type="number" value="172">
+      </div>
+      <div>
+        <label>Customer Dependency</label>
+        <input id="custDep" type="number" value="54">
+      </div>
+      <div>
+        <label>Manual → Automation</label>
+        <input id="m2a" type="number" value="113">
+      </div>
+      <div>
+        <label>UDS → Plug (Migration)</label>
+        <input id="uds" type="number" value="206">
+      </div>
+    </div>
+  </div>
 
     <!-- hidden calculation details -->
     <div class="backlog-summary">
@@ -103,16 +129,25 @@
 
   <div class="card">
     <h3>Capacity & FTE</h3>
-    <label>Monthly Capacity</label>
-    <input id="capacity" type="number" value="225">
-    <label>Dev FTE</label>
-    <input id="devFte" type="number" value="8">
-    <label>QA FTE</label>
-    <input id="qaFte" type="number" value="7">
-    <label>Hours per FTE</label>
-    <input id="hrsPerFte" type="number" value="160">
+    <div class="form-grid">
+      <div>
+        <label>Monthly Capacity</label>
+        <input id="capacity" type="number" value="225">
+      </div>
+      <div>
+        <label>Dev FTE</label>
+        <input id="devFte" type="number" value="8">
+      </div>
+      <div>
+        <label>QA FTE</label>
+        <input id="qaFte" type="number" value="7">
+      </div>
+      <div>
+        <label>Hours per FTE</label>
+        <input id="hrsPerFte" type="number" value="160">
+      </div>
+    </div>
   </div>
-</div>
 
 <br>
 
