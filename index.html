@@ -63,6 +63,9 @@
   .form-grid {
     grid-template-columns: repeat(3, 1fr);
   }
+  .full-width {
+  grid-column: 1 / -1;
+}
 }
   </style>
 </head>
@@ -115,10 +118,10 @@
         <label>Manual → Automation</label>
         <input id="m2a" type="number" value="113">
       </div>
-      <div>
-        <label>UDS → Plug (Migration)</label>
-        <input id="uds" type="number" value="206">
-      </div>
+     <div class="full-width">
+  <label>UDS → Plug (Migration)</label>
+  <input id="uds" type="number" value="206">
+</div>
     </div>
 
     <!-- hidden calculation details (kept but hidden) -->
@@ -144,10 +147,10 @@
         <label>QA FTE</label>
         <input id="qaFte" type="number" value="7">
       </div>
-      <div>
-        <label>Hours per FTE</label>
-        <input id="hrsPerFte" type="number" value="160">
-      </div>
+      <div class="full-width">
+  <label>Hours per FTE</label>
+  <input id="hrsPerFte" type="number" value="160">
+</div>
     </div>
   </div>
 
