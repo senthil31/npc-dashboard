@@ -50,6 +50,9 @@
     th { background: #f1f5f9; }
     .pos { color: #16a34a; font-weight: bold; }
     .neg { color: #dc2626; font-weight: bold; }
+
+    /* Hide internal backlog math from UI */
+    .backlog-summary { display: none; }
   </style>
 </head>
 
@@ -76,21 +79,29 @@
   </div>
 
   <div class="card">
-    <h3>Monthly Inflow Assumptions</h3>
-    <label>NPC (Monthly)</label>
-    <input id="npcMonthly" type="number" value="110">
-    <label>Prospect (Monthly)</label>
-    <input id="prospectMonthly" type="number" value="67">
+    <h3>Backlog Type</h3>
+    <label>NPC</label><input id="npcFirm" type="number" value="172">
+    <label>Customer Dependency</label><input id="custDep" type="number" value="54">
+    <label>Manual → Automation</label><input id="m2a" type="number" value="113">
+    <label>UDS → Plug (Migration)</label><input id="uds" type="number" value="206">
+
+    <!-- hidden calculation details -->
+    <div class="backlog-summary">
+      Weighted Unfirm (60%): <span id="weightedUnfirm"></span><br>
+      Total Starting Backlog: <span id="totalStartBacklog"></span>
+    </div>
   </div>
 
   <div class="card">
     <h3>Capacity & FTE</h3>
-    <label>Monthly Capacity (auto / manual)</label>
+    <label>Monthly Capacity</label>
     <input id="capacity" type="number" value="225">
     <label>Dev FTE</label>
     <input id="devFte" type="number" value="8">
     <label>QA FTE</label>
     <input id="qaFte" type="number" value="7">
+    <label>Hours per FTE</label>
+    <input id="hrsPerFte" type="number" value="160">
   </div>
 </div>
 
@@ -139,115 +150,98 @@
 
 <br>
 
-<!-- CHART -->
+<!-- FORECAST -->
 <div class="card">
   <h3>6-Month Incremental Backlog Forecast</h3>
   <canvas id="forecastChart" height="120"></canvas>
 </div>
 
 <script>
-  const months = ["Jan","Feb","Mar","Apr","May","Jun"];
-  const simDefaults = { npc:110, yardi:34, m2a:20, prospect:67 };
+const months=["Jan","Feb","Mar","Apr","May","Jun"];
+const simDefaults={npc:110,yardi:34,m2a:20,prospect:67};
+let isManualCapacity=false;
 
-  let isManualCapacity = false;
+const tbody=document.querySelector("#simTable tbody");
+months.forEach(m=>{
+  const tr=document.createElement("tr");
+  tr.innerHTML=`
+    <td>${m}</td>
+    <td><input value="${simDefaults.npc}"></td>
+    <td><input value="${simDefaults.yardi}"></td>
+    <td><input value="${simDefaults.m2a}"></td>
+    <td><input value="${simDefaults.prospect}"></td>
+    <td class="total">0</td>`;
+  tbody.appendChild(tr);
+});
 
-  const tbody = document.querySelector("#simTable tbody");
-  months.forEach(m => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${m}</td>
-      <td><input value="${simDefaults.npc}"></td>
-      <td><input value="${simDefaults.yardi}"></td>
-      <td><input value="${simDefaults.m2a}"></td>
-      <td><input value="${simDefaults.prospect}"></td>
-      <td class="total">0</td>`;
-    tbody.appendChild(tr);
-  });
+const chart=new Chart(document.getElementById("forecastChart"),{
+  type:"line",
+  data:{labels:months,datasets:[
+    {label:"Backlog",data:[],borderColor:"#0f172a",tension:0.2},
+    {label:"Capacity",data:[],borderColor:"#16a34a",borderDash:[6,4]}
+  ]},
+  options:{scales:{y:{beginAtZero:true}}}
+});
 
-  const chart = new Chart(document.getElementById("forecastChart"), {
-    type: "line",
-    data: {
-      labels: months,
-      datasets: [
-        { label:"Backlog", data:[], borderColor:"#0f172a", tension:0.2 },
-        { label:"Capacity", data:[], borderColor:"#16a34a", borderDash:[6,4] }
-      ]
-    },
-    options: { scales:{ y:{ beginAtZero:true } } }
-  });
+capacity.addEventListener("input",()=>isManualCapacity=true);
+["devFte","qaFte","hrsPerFte"].forEach(id=>{
+  document.getElementById(id).addEventListener("input",()=>{isManualCapacity=false;recalc();});
+});
 
-  capacity.addEventListener("input", () => {
-    isManualCapacity = true;
-  });
+function recalc(){
+  currentBacklogKpi.textContent=currentBacklog.value;
 
-  ["devFte","qaFte"].forEach(id => {
-    document.getElementById(id).addEventListener("input", () => {
-      isManualCapacity = false;
-      recalc();
-    });
-  });
+  const DEV_HRS=8.9,QA_HRS=7.8,HRS=+hrsPerFte.value;
+  const devCap=Math.floor((devFte.value*HRS)/DEV_HRS);
+  const qaCap=Math.floor((qaFte.value*HRS)/QA_HRS);
+  const autoCap=Math.min(devCap,qaCap);
 
-  function recalc() {
-    currentBacklogKpi.textContent = currentBacklog.value;
+  if(!isManualCapacity) capacity.value=autoCap;
+  capacityKpi.textContent=capacity.value;
 
-    const DEV_HRS = 8.9, QA_HRS = 7.8, HRS = 160;
-
-    const devCap = Math.floor((devFte.value * HRS) / DEV_HRS);
-    const qaCap  = Math.floor((qaFte.value * HRS) / QA_HRS);
-    const autoCapacity = Math.min(devCap, qaCap);
-
-    if (!isManualCapacity) capacity.value = autoCapacity;
-
-    capacityKpi.textContent = capacity.value;
-
-    const inflow = +npcMonthly.value + +prospectMonthly.value;
-    let backlog = +currentBacklog.value;
-
-    const bArr=[], cArr=[];
-    for(let i=0;i<6;i++){
-      bArr.push(backlog);
-      cArr.push(+capacity.value);
-      backlog = Math.max(0, backlog + inflow - +capacity.value);
-    }
-
-    chart.data.datasets[0].data = bArr;
-    chart.data.datasets[1].data = cArr;
-    chart.update();
-
-    let monthlyTickets=0;
-    document.querySelectorAll("#simTable tbody tr").forEach(r=>{
-      let t=0;
-      r.querySelectorAll("input").forEach(i=>t+=+i.value);
-      r.querySelector(".total").textContent=t;
-      monthlyTickets+=t;
-    });
-    monthlyTickets/=6;
-
-    const devNeed=Math.round(monthlyTickets*DEV_HRS);
-    const qaNeed=Math.round(monthlyTickets*QA_HRS);
-
-    const devAvail=devFte.value*HRS;
-    const qaAvail=qaFte.value*HRS;
-
-    devNeeded.textContent=devNeed;
-    qaNeeded.textContent=qaNeed;
-    devAvail.textContent=devAvail;
-    qaAvail.textContent=qaAvail;
-
-    const devSur=devAvail-devNeed;
-    const qaSur=qaAvail-qaNeed;
-
-    devSurplus.textContent=devSur;
-    qaSurplus.textContent=qaSur;
-
-    addlDev.textContent=devSur>=0?0:Math.ceil(Math.abs(devSur)/HRS);
-    addlQa.textContent=qaSur>=0?0:Math.ceil(Math.abs(qaSur)/HRS);
-    addlDevTop.textContent=addlDev.textContent;
-    addlQaTop.textContent=addlQa.textContent;
+  let inflow=110+67;
+  let b=+currentBacklog.value;
+  const bArr=[],cArr=[];
+  for(let i=0;i<6;i++){
+    bArr.push(b);
+    cArr.push(+capacity.value);
+    b=Math.max(0,b+inflow-+capacity.value);
   }
+  chart.data.datasets[0].data=bArr;
+  chart.data.datasets[1].data=cArr;
+  chart.update();
 
-  document.querySelectorAll("input").forEach(i=>i.addEventListener("input",recalc));
-  recalc();
+  let tickets=0;
+  document.querySelectorAll("#simTable tbody tr").forEach(r=>{
+    let t=0;r.querySelectorAll("input").forEach(i=>t+=+i.value);
+    r.querySelector(".total").textContent=t;tickets+=t;
+  });
+  tickets/=6;
+
+  const devNeed=Math.round(tickets*DEV_HRS);
+  const qaNeed=Math.round(tickets*QA_HRS);
+  const devAvail=devFte.value*HRS;
+  const qaAvail=qaFte.value*HRS;
+
+  devNeeded.textContent=devNeed;
+  qaNeeded.textContent=qaNeed;
+  devAvailEl.textContent=devAvail;
+  qaAvailEl.textContent=qaAvail;
+
+  const devSur=devAvail-devNeed;
+  const qaSur=qaAvail-qaNeed;
+
+  devSurplus.textContent=devSur;
+  qaSurplus.textContent=qaSur;
+
+  addlDev.textContent=devSur>=0?0:Math.ceil(Math.abs(devSur)/HRS);
+  addlQa.textContent=qaSur>=0?0:Math.ceil(Math.abs(qaSur)/HRS);
+  addlDevTop.textContent=addlDev.textContent;
+  addlQaTop.textContent=addlQa.textContent;
+}
+
+document.querySelectorAll("input").forEach(i=>i.addEventListener("input",recalc));
+recalc();
 </script>
 
 </body>
