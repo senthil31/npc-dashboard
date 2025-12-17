@@ -305,17 +305,29 @@ function recalc(){
   if(!isManualCapacity) capacity.value=autoCap;
   capacityKpi.textContent=capacity.value;
 
-  let inflow=110+67;
-  let b=+currentBacklog.value;
-  const bArr=[],cArr=[];
-  for(let i=0;i<6;i++){
-    bArr.push(b);
-    cArr.push(+capacity.value);
-    b=Math.max(0,b+inflow-+capacity.value);
-  }
-  chart.data.datasets[0].data=bArr;
-  chart.data.datasets[1].data=cArr;
-  chart.update();
+ // 🔹 Backlog incremental calculation
+let b = +currentBacklog.value;
+const bArr = [], cArr = [];
+
+document.querySelectorAll("#simTable tbody tr").forEach((row, idx) => {
+  if (idx >= 6) return;
+
+  const inputs = row.querySelectorAll("input");
+
+  // ONLY NPC + Prospect contribute to backlog inflow
+  const npcInflow = +inputs[0].value || 0;
+  const prospectInflow = +inputs[3].value || 0;
+  const monthlyInflow = npcInflow + prospectInflow;
+
+  bArr.push(b);
+  cArr.push(+capacity.value);
+
+  b = Math.max(0, b + monthlyInflow - +capacity.value);
+});
+
+chart.data.datasets[0].data = bArr;
+chart.data.datasets[1].data = cArr;
+chart.update();
 
   let tickets=0;
   document.querySelectorAll("#simTable tbody tr").forEach(r=>{
